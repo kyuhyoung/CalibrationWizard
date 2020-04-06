@@ -75,6 +75,7 @@ void Calib::cameraCalib()
         switch( s.calibrationPattern ) // Find feature points on the input format
         {
             case Settings::CHESSBOARD:
+				cout << "s.boardSize : " << s.boardSize << endl;
                 found = findChessboardCorners( view, s.boardSize, pointBuf,
                                               CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FAST_CHECK | CV_CALIB_CB_NORMALIZE_IMAGE);
                 break;

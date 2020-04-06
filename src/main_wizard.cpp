@@ -55,7 +55,7 @@ int main(int argc, const char * argv[])
     if (mode_num!=2)
     {
         obj -> openCamera();
-        for(;;)
+		for(;;)
         {
             keyNum = cv::waitKey(5);
             if(!(obj -> controlFrame(keyNum))) break; // Show frame
@@ -75,16 +75,22 @@ int main(int argc, const char * argv[])
             }
             else
             {
-                if((char)keyNum == ' ') // Captured a new image
-                {
-                    if(chess_flag)
-                    {
-                        obj -> captureImage(ini_calib_image_path, capture_ini_idx++);
-                        //Add the path of new captured image to the image list
-                        obj -> addImagePath(mode_num);
-                    }
-                    else std::cout << "Warning: checkboard is not detected!" << std::endl;
-                }
+				if ((char)keyNum == ' ') // Captured a new image
+				{
+					//cout << "space bar is pressed" << endl;
+					if (chess_flag)
+					{
+						//cout << "chess_flag is true" << endl;
+						obj->captureImage(ini_calib_image_path, capture_ini_idx++);
+						//Add the path of new captured image to the image list
+						obj->addImagePath(mode_num);
+					}
+					else
+					{
+						//cout << "chess_flag is false" << endl;
+						std::cout << "Warning: checkboard is not detected!" << std::endl;
+					}
+				}
                 chess_flag = obj -> plotGuide(0);
             }
             obj -> showFrame();

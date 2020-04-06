@@ -3,8 +3,10 @@
 //  
 //  Copyright © 2019 Songyou Peng. All rights reserved.
 //
-
 #include "Proc.h"
+
+using namespace std;
+using namespace cv;
 
 Proc::Proc()
 {}
@@ -226,11 +228,14 @@ void Proc::addImagePath(const int& mode)
 // Find the chessboard and plot the guide to the goal (guide_flag = 1, plot; 0, no)
 bool Proc::plotGuide(bool guide_flag)
 {
+	if(0 == counting) cout << "boardSize : " << boardSize << endl;
     if (counting++ % 5 == 0)
     {
         found = findChessboardCorners( frame_save, boardSize, pointBuf,
                                       CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FAST_CHECK);
-    }
+		//cout << "boardSize : " << boardSize << endl;
+		//imshow("frme_save", frame_save);	waitKey(1);
+	}
 
         // Draw the corners.
         drawChessboardCorners( frame,boardSize, cv::Mat(pointBuf), found);
