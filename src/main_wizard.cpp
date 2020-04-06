@@ -20,7 +20,7 @@ int main(int argc, const char * argv[])
     int keyNum = 0; // variable for key pressing
     bool chess_flag(false); // flag for calibration
     Proc *obj = new Proc;
-    Settings *s = new Settings;
+    Settings *setting = new Settings;
     
     std::string inputSettingsFile = "../config/wizard.xml";
     obj -> base_path = "../out/";
@@ -30,8 +30,8 @@ int main(int argc, const char * argv[])
     // Define the path of different contents
     std::string nextpose_image_path = obj -> base_path + "images/nextpose/";
     std::string ini_calib_image_path = obj -> base_path + "images/ini_calib/";
-    s->input = obj -> imagelist_path;
-    s->outputFileName = obj -> base_path + "out_camera_data.xml";
+    setting->input = obj -> imagelist_path;
+    setting->outputFileName = obj -> base_path + "out_camera_data.xml";
     
     std::cout << "Please choose the mode. (0: initial images capture, 1: show next pose, 2: calibrate existing images) " <<std::endl;
     std::cin >> mode_num;
@@ -40,7 +40,8 @@ int main(int argc, const char * argv[])
     {
         case 0:
             obj -> resetImagePath(); // Reset the xml file containing the image list
-            std::cout << "Press space key to capture an image, and please capture at least two images" << std::endl;
+			//std::cout << "Press space key to capture an image, and please capture at least " << int(setting->nrFrames * 1.1) << " images" << std::endl;
+			std::cout << "Press space key to capture an image, and please capture at least two images" << std::endl;
             break;
         case 1:
             obj -> extract_points();// Read all the points of next pose
@@ -81,9 +82,14 @@ int main(int argc, const char * argv[])
 					if (chess_flag)
 					{
 						//cout << "chess_flag is true" << endl;
-						obj->captureImage(ini_calib_image_path, capture_ini_idx++);
-						//Add the path of new captured image to the image list
-						obj->addImagePath(mode_num);
+						bool b_saved = obj->captureImage(ini_calib_image_path, capture_ini_idx);
+						if (b_saved)
+						{
+							//Add the path of new captured image to the image list
+							obj->addImagePath(mode_num);
+							capture_ini_idx++;
+						}
+						//is_new_detection = false;
 					}
 					else
 					{
@@ -105,13 +111,13 @@ int main(int argc, const char * argv[])
         std::cout << "Could not open the configuration file: \"" << inputSettingsFile << "\"" << std::endl;
         return false;
     }
-    fs["Settings"] >> *s;
+    fs["Settings"] >> *setting;
     fs.release();// close Settings file
     
     Calib *calib = new Calib;
     calib -> base_path = obj -> base_path;
     // Copy the setting information to the calibration class
-    calib -> readSettings(*s);
+    calib -> readSettings(*setting);
     // Calibrate the camera using the captured images
     calib -> cameraCalib();
     
@@ -119,7 +125,7 @@ int main(int argc, const char * argv[])
     std::cout << std::endl;
     delete obj;
     delete calib;
-    delete s;
+    delete setting;
     
     return 0;
 }

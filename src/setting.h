@@ -92,6 +92,7 @@ public:
             cerr << "Invalid square size " << squareSize << endl;
             goodInput = false;
         }
+		cout << "nrFrames b4 : " << nrFrames << endl;	//exit(0);
         if (nrFrames <= 0)
         {
             cerr << "Invalid number of frames " << nrFrames << endl;
@@ -102,6 +103,7 @@ public:
             inputType = INVALID;
         else
         {
+			cout << "input : " << input << endl;
             if (input[0] >= '0' && input[0] <= '9')
             {
                 stringstream ss(input);
@@ -125,11 +127,13 @@ public:
             if (inputType != IMAGE_LIST && !inputCapture.isOpened())
                 inputType = INVALID;
         }
+		cout << "nrFrames after : " << nrFrames << endl;	//exit(0);
         if (inputType == INVALID)
         {
             cerr << " Inexistent input: " << input;
             goodInput = false;
         }
+		//cout << "inputType : " << inputType << endl;	exit(0);
         
         flag = 0;
         if(calibFixPrincipalPoint) flag |= CV_CALIB_FIX_PRINCIPAL_POINT;

@@ -57,7 +57,7 @@ public:
     void showNextPose();// Show next pose
     void extract_points();// Extract 2D points of next pose
     int update_captureIndex(); // Update the current new captured image index
-    void captureImage(std::string , int); // Capture an image
+    bool captureImage(std::string , int); // Capture an image
     void drawCircle(cv::Mat, cv::Point);// Draw circle for showNextPose
     void addImagePath(const int&); // Add the new captured image to the image list
     bool plotGuide(bool );

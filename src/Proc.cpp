@@ -26,7 +26,7 @@ Proc::~Proc(){cap.release();}
 bool Proc::controlFrame(int keyNum)
 {
     cap >> frame;
-    frame.copyTo(frame_save); // copy the current frame for the capturing purpose later
+    //frame.copyTo(frame_save); // copy the current frame for the capturing purpose later
     
     if(keyNum == 27 || frame.empty()) return false; // end of video stream or press ESC
     else return true;
@@ -188,14 +188,30 @@ int Proc::update_captureIndex()
     }
 }
 
-void Proc::captureImage(std::string path, int idx)
+bool Proc::captureImage(std::string path, int idx)
 {
+	bool b_saved = false;
     char imagename[200];
-    sprintf(imagename,"%.3d.jpg", idx);
-    curr_image_path = path + (std::string)imagename;
-    cv::imwrite( curr_image_path, frame_save);
-    std::cout << "Capture image " << idx << " successfully.  Press 'Esc' if you are done." << std::endl;
-
+    //sprintf(imagename,"%.3d.jpg", idx);
+	sprintf(imagename, "%.3d.bmp", idx);
+	curr_image_path = path + (std::string)imagename;
+	if (cv::imwrite(curr_image_path, frame_save))
+	{
+		Mat im_just_saved = cv::imread(curr_image_path, CV_LOAD_IMAGE_COLOR);
+		bool phound = findChessboardCorners(im_just_saved, boardSize, pointBuf,
+			CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FAST_CHECK | CV_CALIB_CB_NORMALIZE_IMAGE);
+		if (phound)
+		{
+			std::cout << "Saved the captured image " << idx << " successfully at : " << curr_image_path << ".  Press 'Esc' if you are done." << std::endl;
+			b_saved = true;
+		}
+		else std::cout << "Could NOT re-find chessboard from the saved image. So the saving is in vain" << std::endl;
+	}
+	else
+	{
+		std::cout << "Can NOT save the captured image at : " << curr_image_path << endl;	exit(0);
+	}
+	return b_saved;
 }
 
 void Proc::showFrame()
@@ -229,18 +245,25 @@ void Proc::addImagePath(const int& mode)
 bool Proc::plotGuide(bool guide_flag)
 {
 	if(0 == counting) cout << "boardSize : " << boardSize << endl;
-    if (counting++ % 5 == 0)
+	//if(counting % 50 == 0)
+	//if(counting % 1 == 0)
     {
-        found = findChessboardCorners( frame_save, boardSize, pointBuf,
-                                      CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FAST_CHECK);
+		//found = findChessboardCorners(frame_save, boardSize, pointBuf, CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FAST_CHECK);
+		found = findChessboardCorners(frame, boardSize, pointBuf, CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FAST_CHECK);
 		//cout << "boardSize : " << boardSize << endl;
 		//imshow("frme_save", frame_save);	waitKey(1);
+		if (found)
+		{
+			frame.copyTo(frame_save); // copy the current frame for the capturing purpose later
+			//count_last = counting;
+			drawChessboardCorners(frame, boardSize, cv::Mat(pointBuf), found);
+		}
 	}
 
-        // Draw the corners.
-        drawChessboardCorners( frame,boardSize, cv::Mat(pointBuf), found);
-
-        return found;
+	// Draw the corners.
+    //drawChessboardCorners(frame, boardSize, cv::Mat(pointBuf), found);
+	counting++;
+    return found;
 }
 
 

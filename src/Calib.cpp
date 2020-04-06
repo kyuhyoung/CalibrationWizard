@@ -7,6 +7,8 @@
 // Modified and Changed to OOP by Songyou Peng, INRIA Grenoble Rhône-Alpes, 2016
 
 #include "Calib.h"
+#include <sstream>
+#include <iomanip>
 
 typedef struct {
     cv::Mat R;
@@ -39,6 +41,52 @@ bool Calib::readSettings(Settings ini_s)
     if (!s.calibZerok2Dist)
         ++numIntr;
     return true;
+}
+
+
+Mat concatenate_images(const Mat& img1, const Mat& img2, int horizontal_or_vertical)
+{
+	Mat res;
+	//  Check if the two image have the same # of channels and type	
+	//  If # channels or type is different	
+	if (img1.type() != img2.type() || img1.channels() != img2.channels())    return res;
+	int rows = img1.rows + img2.rows, cols = img1.cols + img2.cols;
+	bool is_horizontal = true;
+	if (horizontal_or_vertical >= 0)
+	{
+		if (horizontal_or_vertical > 0)
+		{
+			is_horizontal = false;
+		}
+		else if (cols > rows)
+		{
+			is_horizontal = false;
+		}
+	}
+	// Get dimension of final image	
+	if (is_horizontal)
+	{
+		rows = max(img1.rows, img2.rows);
+	}
+	else
+	{
+		cols = max(img1.cols, img2.cols);
+	}
+	// Create a black image	
+	//res = Mat3b(rows, cols, Vec3b(0,0,0));	
+	res = Mat::zeros(rows, cols, img1.type());
+	// Copy images in correct position	
+	img1.copyTo(res(Rect(0, 0, img1.cols, img1.rows)));
+	if (is_horizontal)
+	{
+		img2.copyTo(res(Rect(img1.cols, 0, img2.cols, img2.rows)));
+	}
+	else
+	{
+		img2.copyTo(res(Rect(0, img1.rows, img2.cols, img2.rows)));
+	}
+	//imshow("img1", img1);waitKey();   imshow("img2", img2);   imshow("res", res); waitKey();  exit(0);	
+	return res;
 }
 
 void Calib::cameraCalib()
@@ -75,7 +123,7 @@ void Calib::cameraCalib()
         switch( s.calibrationPattern ) // Find feature points on the input format
         {
             case Settings::CHESSBOARD:
-				cout << "s.boardSize : " << s.boardSize << endl;
+				//cout << "s.boardSize : " << s.boardSize << endl;
                 found = findChessboardCorners( view, s.boardSize, pointBuf,
                                               CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FAST_CHECK | CV_CALIB_CB_NORMALIZE_IMAGE);
                 break;
@@ -92,7 +140,8 @@ void Calib::cameraCalib()
         
         if (found)                // If done with success,
         {
-            // improve the found corners' coordinate accuracy for chessboard
+			cout << "image " << i << " : chessboard FOUND." << endl;
+			// improve the found corners' coordinate accuracy for chessboard
             if( s.calibrationPattern == Settings::CHESSBOARD)
             {
                 Mat viewGray;
@@ -113,8 +162,8 @@ void Calib::cameraCalib()
             drawChessboardCorners( view, s.boardSize, Mat(pointBuf), found );
             
         }
-        if(!found)
-            cout << "Not found: image  " << i << endl;
+        //if(!found)
+		else cout << "image " << i << " : chessboard NOT FOUND."<< endl;
         
         //----------------------------- Output Text ------------------------------------------------
         string msg = (mode == CAPTURING) ? "100/100" :
@@ -159,28 +208,35 @@ void Calib::cameraCalib()
         }
         
     }
+	cout << "AAA cam" << endl;
     
     // -----------------------Show the undistorted image for the image list ------------------------
     if( s.inputType == Settings::IMAGE_LIST && s.showUndistorsed )
     {
-        Mat view, rview, map1, map2;
+		cout << "BBB cam" << endl;
+		Mat view, rview, map1, map2;
         initUndistortRectifyMap(cameraMatrix, distCoeffs, Mat(),
                                 getOptimalNewCameraMatrix(cameraMatrix, distCoeffs, imageSize, 1, imageSize, 0),
                                 imageSize, CV_16SC2, map1, map2);
-        
+		cout << "CCC cam" << endl;
+
         for(int i = 0; i < (int)s.imageList.size(); i++ )
         {
             view = imread(s.imageList[i], 1);
             if(view.empty())
                 continue;
             remap(view, rview, map1, map2, INTER_LINEAR);
-            imshow("Image View", rview);
+			//imshow("Image View", rview);
+			Mat distUndist = concatenate_images(view, rview, 1);
+			imshow("left : distorted, right : undistorted", distUndist);
             char c = (char)waitKey();
             if( c  == ESC_KEY || c == 'q' || c == 'Q' )
                 break;
         }
-    }
-    
+		cout << "DDD cam" << endl;
+	}
+	cout << "EEE" << endl;
+
 }
 
 bool Calib::runCalibrationAndSave(Settings& s, Size imageSize, Mat&  cameraMatrix, Mat& distCoeffs,vector<vector<Point2f> > imagePoints )
@@ -195,11 +251,13 @@ bool Calib::runCalibrationAndSave(Settings& s, Size imageSize, Mat&  cameraMatri
     << ". avg re projection error = "  << totalAvgErr << endl;
     
     
-    
+	cout << "AAA run" << endl;
+
     
     if( ok )
         saveCameraParams( s, imageSize, cameraMatrix, distCoeffs, rvecs ,tvecs, reprojErrs,
                          imagePoints, totalAvgErr);
+	cout << "BBB run" << endl;
     return ok;
 }
 
@@ -285,37 +343,75 @@ void Calib::calcBoardCornerPositions(Size boardSize, float squareSize, vector<Po
     }
 }
 
+//void writeMatToFile(cv::Mat& m, const char* filename)
+void writeMatToFile(cv::Mat& m, const string& filename)
+{
+	ofstream fout(filename);
+
+	if (!fout)
+	{
+		cout << "File Not Opened" << endl;  return;
+	}
+
+	for (int i = 0; i<m.rows; i++)
+	{
+		for (int j = 0; j<m.cols; j++)
+		{
+			fout << m.at<float>(i, j) << "\t";
+		}
+		fout << endl;
+	}
+
+	fout.close();
+}
+
+
 // Print camera parameters to the output file
 void Calib::saveCameraParams( Settings& s, Size& imageSize, Mat& cameraMatrix, Mat& distCoeffs,
                              const vector<Mat>& rvecs, const vector<Mat>& tvecs,
                              const vector<float>& reprojErrs, const vector<vector<Point2f> >& imagePoints,
                              double totalAvgErr )
 {
-    FileStorage fs( s.outputFileName, FileStorage::WRITE );
+	cout << "AAA save" << endl;
+	FileStorage fs( s.outputFileName, FileStorage::WRITE );
+	writeMatToFile(cameraMatrix, base_path + "out_camera_matrix.txt");
+	writeMatToFile(distCoeffs, base_path + "out_distort_coeff.txt");
+/*
     ofstream txt_cameraMatrix;
     ofstream txt_distortCoeff;
     ofstream txt_rotationMat;
     ofstream txt_tVec;
     ofstream txt_twoD;
-    
+	cout << "BBB save" << endl;
+
     txt_cameraMatrix.open (base_path + "out_camera_matrix.txt");
     txt_distortCoeff.open (base_path + "out_distort_coeff.txt");
     txt_twoD.open(base_path + "out_camera_points.txt");
     txt_rotationMat.open (base_path + "out_rotation_matrix.txt");
     txt_tVec.open(base_path + "out_translation_vector.txt");
-    
+	cout << "CCC save" << endl;
+	
+	cout << "base_path + out_camera_matrix.txt : " << base_path + "out_camera_matrix.txt" << endl;
+	cout << "cameraMatrix.size() : " << cameraMatrix.size() << endl;
+
     txt_cameraMatrix << cameraMatrix;
-    txt_cameraMatrix.close();
-    txt_distortCoeff << distCoeffs;
-    txt_distortCoeff.close();
-    
-    
+	cout << "DDD save" << endl;
+	cout << "base_path + out_distort_coeff.txt : " << base_path + "out_distort_coeff.txt" << endl;
+	txt_cameraMatrix.close();
+	cout << "EEE save" << endl;
+	txt_distortCoeff << distCoeffs;
+	cout << "FFF save" << endl;
+	txt_distortCoeff.close();
+	cout << "GGG save" << endl;
+*/
+
     time_t tm;
     time( &tm );
     struct tm *t2 = localtime( &tm );
     char buf[1024];
     strftime( buf, sizeof(buf)-1, "%c", t2 );
-    
+	cout << "EEE save" << endl;
+
     fs << "calibration_Time" << buf;
     
     if( !rvecs.empty() || !reprojErrs.empty() )
@@ -327,7 +423,8 @@ void Calib::saveCameraParams( Settings& s, Size& imageSize, Mat& cameraMatrix, M
     fs << "square_Size" << s.squareSize;
     fs << "k1_Dist" << s.calibZerok1Dist;
     fs << "k2_Dist" << s.calibZerok2Dist;
-    
+	cout << "AAA save" << endl;
+
     if( s.flag & CV_CALIB_FIX_ASPECT_RATIO )
         fs << "FixAspectRatio" << s.aspectRatio;
     
@@ -341,12 +438,14 @@ void Calib::saveCameraParams( Settings& s, Size& imageSize, Mat& cameraMatrix, M
         cvWriteComment( *fs, buf, 0 );
         
     }
-    
+	cout << "FFF save" << endl;
+
     fs << "flagValue" << s.flag;
     
     fs << "Camera_Matrix" << cameraMatrix;
     fs << "Distortion_Coefficients" << distCoeffs;
-    
+	cout << "GGG save" << endl;
+
     fs << "Avg_Reprojection_Error" << totalAvgErr;
     if( !reprojErrs.empty() )
         fs << "Per_View_Reprojection_Errors" << Mat(reprojErrs);
@@ -370,20 +469,21 @@ void Calib::saveCameraParams( Settings& s, Size& imageSize, Mat& cameraMatrix, M
             
             Mat outr;
             Rodrigues(r, outr);
-            txt_rotationMat << outr.reshape(0,1) << endl;
-            txt_tVec << t << endl;
-            
+            //txt_rotationMat << outr.reshape(0,1) << endl;            txt_tVec << t << endl;
+			std::stringstream ss;	ss << std::setw(2) << std::setfill('0') << i;
+			writeMatToFile(outr, base_path + "out_rotation_matrix" + ss.str() + ".txt");
+			writeMatToFile(t, base_path + "out_translation_vector" + ss.str() + ".txt");            
         }
         
-        txt_rotationMat.close();
-        txt_tVec.close();
+        //txt_rotationMat.close();        txt_tVec.close();
         
         cvWriteComment( *fs, "a set of 6-tuples (rotation vector + translation vector) for each view", 0 );
         fs << "Extrinsic_Parameters" << bigmat;
         
     }
 
-    
+	cout << "HHH save" << endl;
+
     if( !imagePoints.empty() )
     {
         Mat imagePtMat((int)imagePoints.size(), (int)imagePoints[0].size(), CV_32FC2);
@@ -392,12 +492,18 @@ void Calib::saveCameraParams( Settings& s, Size& imageSize, Mat& cameraMatrix, M
             Mat r = imagePtMat.row(i).reshape(2, imagePtMat.cols);
             Mat imgpti(imagePoints[i]);
             imgpti.copyTo(r);
-            txt_twoD << imagePoints[i] << endl;
-        }
+            //txt_twoD << imagePoints[i] << endl;
+			std::stringstream ss;	ss << std::setw(2) << std::setfill('0') << i;
+
+			writeMatToFile(Mat(imagePoints[i]), base_path + "out_camera_points" + ss.str() + ".txt");
+		}
+
         fs << "Image_points" << imagePtMat;
         
-        txt_twoD.close();
+        //txt_twoD.close();
     }
+	cout << "III save" << endl;
+
 }
 
 
