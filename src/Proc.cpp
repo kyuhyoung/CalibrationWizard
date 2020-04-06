@@ -194,7 +194,7 @@ void Proc::captureImage(std::string path, int idx)
     sprintf(imagename,"%.3d.jpg", idx);
     curr_image_path = path + (std::string)imagename;
     cv::imwrite( curr_image_path, frame_save);
-    std::cout << "Capture image " << idx << " successfully." << std::endl;
+    std::cout << "Capture image " << idx << " successfully.  Press 'Esc' if you are done." << std::endl;
 
 }
 
