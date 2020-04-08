@@ -343,9 +343,16 @@ void Calib::calcBoardCornerPositions(Size boardSize, float squareSize, vector<Po
     }
 }
 
+//	ref. : https://stackoverflow.com/questions/10167534/how-to-find-out-what-type-of-a-mat-object-is-with-mattype-in-opencv
 //void writeMatToFile(cv::Mat& m, const char* filename)
-void writeMatToFile(cv::Mat& m, const string& filename)
+void writeMat2File(cv::Mat& m, const string& filename, bool channelwise)
 {
+	if (m.dims >= 4)
+	{
+		cout << "Matrix dimension is " << m.dims << "File writing for matrix of more than 3 dimension is not implemented yet." << endl;
+		return;
+	}
+
 	ofstream fout(filename);
 
 	if (!fout)
@@ -353,15 +360,194 @@ void writeMatToFile(cv::Mat& m, const string& filename)
 		cout << "File Not Opened" << endl;  return;
 	}
 
-	for (int i = 0; i<m.rows; i++)
+	int taip = m.type() % 8;
+	int n_c = m.channels();
+	if (channelwise)
 	{
-		for (int j = 0; j<m.cols; j++)
+		if (0 == taip)	//	unsinged char
 		{
-			fout << m.at<float>(i, j) << "\t";
+			for (int iC = 0; iC < n_c; iC++)
+			{
+				for (int i = 0; i < m.rows; i++)
+				{
+					unsigned char *ptr_row = m.ptr<unsigned char>(i);
+					for (int j = 0; j < m.cols; j++) fout << ptr_row[n_c * j + iC] << "\t";
+					fout << endl;
+				}
+			}
 		}
-		fout << endl;
+
+		else if (1 == taip)	//	nsinged char
+		{
+			for (int iC = 0; iC < n_c; iC++)
+			{
+				for (int i = 0; i < m.rows; i++)
+				{
+					signed char *ptr_row = m.ptr<signed char>(i);
+					for (int j = 0; j < m.cols; j++) fout << ptr_row[n_c * j + iC] << "\t";
+					fout << endl;
+				}
+			}
+		}
+
+		else if (2 == taip)	//	nsinged char
+		{
+			for (int iC = 0; iC < n_c; iC++)
+			{
+				for (int i = 0; i < m.rows; i++)
+				{
+					unsigned short *ptr_row = m.ptr<unsigned short>(i);
+					for (int j = 0; j < m.cols; j++) fout << ptr_row[n_c * j + iC] << "\t";
+					fout << endl;
+				}
+			}
+		}
+
+		else if (3 == taip)	//	nsinged char
+		{
+			for (int iC = 0; iC < n_c; iC++)
+			{
+				for (int i = 0; i < m.rows; i++)
+				{
+					signed short *ptr_row = m.ptr<signed short>(i);
+					for (int j = 0; j < m.cols; j++) fout << ptr_row[n_c * j + iC] << "\t";
+					fout << endl;
+				}
+			}
+		}
+
+		else if (4 == taip)	//	nsinged char
+		{
+			for (int iC = 0; iC < n_c; iC++)
+			{
+				for (int i = 0; i < m.rows; i++)
+				{
+					int *ptr_row = m.ptr<int>(i);
+					for (int j = 0; j < m.cols; j++) fout << ptr_row[n_c * j + iC] << "\t";
+					fout << endl;
+				}
+			}
+		}
+
+		else if (5 == taip)	//	nsinged char
+		{
+			for (int iC = 0; iC < n_c; iC++)
+			{
+				for (int i = 0; i < m.rows; i++)
+				{
+					float *ptr_row = m.ptr<float>(i);
+					for (int j = 0; j < m.cols; j++) fout << ptr_row[n_c * j + iC] << "\t";
+					fout << endl;
+				}
+			}
+		}
+
+		else if (6 == taip)	//	nsinged char
+		{
+			for (int iC = 0; iC < n_c; iC++)
+			{
+				for (int i = 0; i < m.rows; i++)
+				{
+					double *ptr_row = m.ptr<double>(i);
+					for (int j = 0; j < m.cols; j++) fout << ptr_row[n_c * j + iC] << "\t";
+					fout << endl;
+				}
+			}
+		}
 	}
 
+	else
+	{
+		if (0 == taip)	//	unsinged char
+		{
+			for (int i = 0; i < m.rows; i++)
+			{
+				unsigned char *ptr_row = m.ptr<unsigned char>(i);
+				for (int j = 0; j < m.cols; j++)
+				{
+					for (int iC = 0; iC < n_c; iC++) fout << ptr_row[n_c * j + iC] << "\t";
+				}
+				fout << endl;
+			}
+		}
+		else if (1 == taip)	//	singed char
+		{
+			for (int i = 0; i < m.rows; i++)
+			{
+				signed char *ptr_row = m.ptr<signed char>(i);
+				for (int j = 0; j < m.cols; j++)
+				{
+					for (int iC = 0; iC < n_c; iC++) fout << ptr_row[n_c * j + iC] << "\t";
+				}
+				fout << endl;
+			}
+		}
+
+		else if (2 == taip)	//	unsinged short
+		{
+			for (int i = 0; i < m.rows; i++)
+			{
+				unsigned short *ptr_row = m.ptr<unsigned short>(i);
+				for (int j = 0; j < m.cols; j++) 
+				{
+					for (int iC = 0; iC < n_c; iC++) fout << ptr_row[n_c * j + iC] << "\t";
+				}
+				fout << endl;
+			}
+		}
+
+		else if (3 == taip)	//	singed short
+		{
+			for (int i = 0; i < m.rows; i++)
+			{
+				signed short *ptr_row = m.ptr<signed short>(i);
+				for (int j = 0; j < m.cols; j++)
+				{
+					for (int iC = 0; iC < n_c; iC++) fout << ptr_row[n_c * j + iC] << "\t";
+				}
+				fout << endl;
+			}
+		}
+
+		else if (4 == taip)	//	int
+		{
+			for (int i = 0; i < m.rows; i++)
+			{
+				int *ptr_row = m.ptr<int>(i);
+				for (int j = 0; j < m.cols; j++)
+				{
+					for (int iC = 0; iC < n_c; iC++) fout << ptr_row[n_c * j + iC] << "\t";
+				}
+				fout << endl;
+			}
+		}
+
+		else if (5 == taip)	//	float
+		{
+			for (int i = 0; i < m.rows; i++)
+			{
+				float *ptr_row = m.ptr<float>(i);
+				for (int j = 0; j < m.cols; j++) 
+				{
+					for (int iC = 0; iC < n_c; iC++) fout << ptr_row[n_c * j + iC] << "\t";
+				}
+				fout << endl;
+			}
+		}
+
+		else if (6 == taip)	//	double
+		{
+			for (int i = 0; i < m.rows; i++)
+			{
+				double *ptr_row = m.ptr<double>(i);
+				for (int j = 0; j < m.cols; j++) 
+				{
+					for (int iC = 0; iC < n_c; iC++) fout << ptr_row[n_c * j + iC] << "\t";
+				}
+				fout << endl;
+			}
+		}
+	}
 	fout.close();
 }
 
@@ -372,10 +558,10 @@ void Calib::saveCameraParams( Settings& s, Size& imageSize, Mat& cameraMatrix, M
                              const vector<float>& reprojErrs, const vector<vector<Point2f> >& imagePoints,
                              double totalAvgErr )
 {
-	cout << "AAA save" << endl;
+	//cout << "AAA save" << endl;
 	FileStorage fs( s.outputFileName, FileStorage::WRITE );
-	writeMatToFile(cameraMatrix, base_path + "out_camera_matrix.txt");
-	writeMatToFile(distCoeffs, base_path + "out_distort_coeff.txt");
+	writeMat2File(cameraMatrix, base_path + "out_camera_matrix.txt", false);
+	writeMat2File(distCoeffs, base_path + "out_distort_coeff.txt", false);
 /*
     ofstream txt_cameraMatrix;
     ofstream txt_distortCoeff;
@@ -410,7 +596,7 @@ void Calib::saveCameraParams( Settings& s, Size& imageSize, Mat& cameraMatrix, M
     struct tm *t2 = localtime( &tm );
     char buf[1024];
     strftime( buf, sizeof(buf)-1, "%c", t2 );
-	cout << "EEE save" << endl;
+	//cout << "EEE save" << endl;
 
     fs << "calibration_Time" << buf;
     
@@ -423,7 +609,7 @@ void Calib::saveCameraParams( Settings& s, Size& imageSize, Mat& cameraMatrix, M
     fs << "square_Size" << s.squareSize;
     fs << "k1_Dist" << s.calibZerok1Dist;
     fs << "k2_Dist" << s.calibZerok2Dist;
-	cout << "AAA save" << endl;
+	//cout << "AAA save" << endl;
 
     if( s.flag & CV_CALIB_FIX_ASPECT_RATIO )
         fs << "FixAspectRatio" << s.aspectRatio;
@@ -438,13 +624,13 @@ void Calib::saveCameraParams( Settings& s, Size& imageSize, Mat& cameraMatrix, M
         cvWriteComment( *fs, buf, 0 );
         
     }
-	cout << "FFF save" << endl;
+	//cout << "FFF save" << endl;
 
     fs << "flagValue" << s.flag;
     
     fs << "Camera_Matrix" << cameraMatrix;
     fs << "Distortion_Coefficients" << distCoeffs;
-	cout << "GGG save" << endl;
+	//cout << "GGG save" << endl;
 
     fs << "Avg_Reprojection_Error" << totalAvgErr;
     if( !reprojErrs.empty() )
@@ -471,8 +657,8 @@ void Calib::saveCameraParams( Settings& s, Size& imageSize, Mat& cameraMatrix, M
             Rodrigues(r, outr);
             //txt_rotationMat << outr.reshape(0,1) << endl;            txt_tVec << t << endl;
 			std::stringstream ss;	ss << std::setw(2) << std::setfill('0') << i;
-			writeMatToFile(outr, base_path + "out_rotation_matrix" + ss.str() + ".txt");
-			writeMatToFile(t, base_path + "out_translation_vector" + ss.str() + ".txt");            
+			writeMat2File(outr, base_path + "out_rotation_matrix_" + ss.str() + ".txt", false);
+			writeMat2File(t, base_path + "out_translation_vector_" + ss.str() + ".txt", false);            
         }
         
         //txt_rotationMat.close();        txt_tVec.close();
@@ -493,13 +679,12 @@ void Calib::saveCameraParams( Settings& s, Size& imageSize, Mat& cameraMatrix, M
             Mat imgpti(imagePoints[i]);
             imgpti.copyTo(r);
             //txt_twoD << imagePoints[i] << endl;
+			Mat tmp = Mat(imagePoints[i]);
+			cout << "tmp.dims : " << tmp.dims << ", tmp.type() : " << tmp.type() << ", tmp.channels() : " << tmp.channels() << endl;	//exit(0);
 			std::stringstream ss;	ss << std::setw(2) << std::setfill('0') << i;
-
-			writeMatToFile(Mat(imagePoints[i]), base_path + "out_camera_points" + ss.str() + ".txt");
+			writeMat2File(Mat(imagePoints[i]), base_path + "out_camera_points_" + ss.str() + ".txt", false);
 		}
-
-        fs << "Image_points" << imagePtMat;
-        
+        fs << "Image_points" << imagePtMat;        
         //txt_twoD.close();
     }
 	cout << "III save" << endl;

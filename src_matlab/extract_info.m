@@ -60,7 +60,8 @@ end
 raw_cameraMatrix = importdata(strcat(filepath,'out_camera_matrix.txt'),',');
 raw_distortCoeff = importdata(strcat(filepath,'out_distort_coeff.txt'),',');
 
-cameraMatrix_row1 = sscanf(raw_cameraMatrix{1},'%*c%f%*c%f%*c%*c%f%*c',[1 Inf]);
+%cameraMatrix_row1 = sscanf(raw_cameraMatrix{1},'%*c%f%*c%f%*c%*c%f%*c',[1 Inf]);
+cameraMatrix_row1 = sscanf(raw_cameraMatrix{1},'%f%*c%f%*c%f%*c',[1 Inf]);
 cameraMatrix_row2 = sscanf(raw_cameraMatrix{2},'%f%*c%f%*c%f%*c',[1 Inf]);
 cameraMatrix_row3 = sscanf(raw_cameraMatrix{3},'%f%*c%f%*c%f%*c',[1 Inf]);
 cameraMatrix  = [cameraMatrix_row1;
@@ -78,7 +79,8 @@ switch dist_type
         dist_coeff = sscanf(raw_distortCoeff{1},'%*c%f%*c');
         intrinsicPara.k1 = dist_coeff(1); 
     case 'radial2'
-        dist_coeff = sscanf(raw_distortCoeff{1},'%*c%f%*c');
+        %dist_coeff = sscanf(raw_distortCoeff{1},'%*c%f%*c');
+        dist_coeff = sscanf(raw_distortCoeff{1},'%f%*c%f%*c%f%*c');
         intrinsicPara.k1 = dist_coeff(1);
         intrinsicPara.k2 = dist_coeff(2);    
     otherwise
@@ -87,7 +89,7 @@ switch dist_type
 end
 
 %% Acquire Extrinsic parameters in different poses
-
+%{
 raw_rotation = importdata(strcat(filepath,'out_rotation_matrix.txt'),',');
 raw_translate = importdata(strcat(filepath,'out_translation_vector.txt'),',');
 num_frame = size(raw_rotation,1);
@@ -96,8 +98,29 @@ t_Vec = zeros(3,num_frame);
 for m = 1 : num_frame
     R = sscanf(raw_rotation{m},'%*c%f%*c%f%*c%f%*c%f%*c%f%*c%f%*c%f%*c%f%*c%f%*c',[1 Inf]);
     rot_Mat(:,:,m) = reshape(R,[3,3])';
-    t_Vec(:,m) = sscanf(raw_translate{m},'%*c%f%*c%f%*c%f%*c',[1 Inf])';
+    t_Vec(:,m) = sscanf(raw_translate{m},'%*c%f%*c%f%*c%f%*c',[1 Inf])';    
+end
+%}
+
+nrOfFrames_parent = Info.getElementsByTagName('nrOfFrames');
+nrOfFrames_node = nrOfFrames_parent.item(0);
+nrOfFrames = nrOfFrames_node.getTextContent;
+nrOfFrames = str2double(nrOfFrames);
+num_frame = int32(nrOfFrames);
+rot_Mat = zeros(3,3,num_frame);
+t_Vec = zeros(3,num_frame);
+for m = 1 : num_frame
+    fn_rot = sprintf('out_rotation_matrix_%02d.txt', m - 1);    raw_rotation = importdata(strcat(filepath, fn_rot),',');
     
+    rotMat_row1 = sscanf(raw_rotation{1},'%f%*c%f%*c%f%*c',[1 Inf]);
+    rotMat_row2 = sscanf(raw_rotation{2},'%f%*c%f%*c%f%*c',[1 Inf]);
+    rotMat_row3 = sscanf(raw_rotation{3},'%f%*c%f%*c%f%*c',[1 Inf]);
+    rot_Mat(:, :, m) = [rotMat_row1; rotMat_row2; rotMat_row3];                     
+    
+    fn_tra = sprintf('out_translation_vector_%02d.txt', m - 1); raw_translate = importdata(strcat(filepath, fn_tra),',');    
+    %t_Vec(:, m) = sscanf(raw_translate{1},'%*c%f%*c%f%*c%f%*c',[1 Inf])';
+    t_Vec(:, m) = sscanf(raw_translate{1},'%f%*c%f%*c%f%*c',[1 Inf])';
+    a = 0;
 end
 
 extrinsicPara.rot_Mat = rot_Mat;

@@ -63,15 +63,23 @@ int main(int argc, const char * argv[])
             
             if(mode_num == 1) // Show the next pose
             {
+				//cout << "AA 1" << endl;
                 obj -> showNextPose();
                 if(obj -> plotGuide(0) && (char)keyNum == ' ') // Captured a new image
                 {
-                    // Get the index of the current new pose
+					cout << "AA 2" << endl;
+					// Get the index of the current new pose
                     calibrated_image_idx = obj -> update_captureIndex();
-                    obj -> captureImage(nextpose_image_path, calibrated_image_idx);
-                    //Add the path of new captured image to the image list
-                    obj -> addImagePath(mode_num);
-                    break;
+					cout << "AA 3" << endl;
+					bool b_saved = obj -> captureImage(nextpose_image_path, calibrated_image_idx);
+					if (b_saved)
+					{
+						cout << "AA 4" << endl;
+						//Add the path of new captured image to the image list
+						obj->addImagePath(mode_num);
+					}
+					cout << "AA 5" << endl;
+					//break;
                 }
             }
             else
